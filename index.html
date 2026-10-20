@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="application-name" content="一现">
+  <meta name="apple-mobile-web-app-title" content="一现">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./site.webmanifest">
+  <title>一现 · 待办与进展</title>
+  <meta name="description" content="一个简洁的待办与想法进展记录本。">
+  <style>
+    :root {
+      --ink: #111111;
+      --muted: #666666;
+      --faint: #9a9a9a;
+      --paper: #ffffff;
+      --paper-light: #ffffff;
+      --line: rgba(0, 0, 0, .14);
+      --accent: #111111;
+      --accent-soft: rgba(0, 0, 0, .06);
+      --shadow: rgba(0, 0, 0, .12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Songti SC", "Noto Serif SC", "STSong", Georgia, serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    select { font: inherit; }
+
+    button { color: inherit; }
+
+    button,
+    a,
+    label,
+    select { touch-action: manipulation; }
+
+    .shell {
+      width: min(816px, 100%);
+      margin: 0 auto;
+      padding: 64px 18px 90px;
+      position: relative;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 2px 23px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--accent);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 7vw, 48px);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -.05em;
+    }
+
+    .summary {
+      padding-bottom: 2px;
+      color: var(--muted);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .page-nav {
+      display: flex;
+      gap: 26px;
+      padding: 15px 2px 0;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 13px;
+    }
+
+    .page-nav a {
+      position: relative;
+      padding: 4px 0 10px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .page-nav a::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 1px;
+      background: var(--accent);
+      opacity: 0;
+      transform: scaleX(.5);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .page-nav a.is-active { color: var(--ink); }
+
+    .page-nav a.is-active::after {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    .view[hidden] { display: none; }
+
+    .composer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 112px auto;
+      gap: 12px;
+      margin: 30px 0 39px;
+    }
+
+    .composer input,
+    .note-form input {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      border-radius: 0;
+      transition: border-color .2s ease, background .2s ease;
+    }
+
+    .composer input {
+      min-height: 46px;
+      padding: 5px 3px;
+      font-size: 18px;
+    }
+
+    .composer input:focus,
+    .note-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .composer select,
+    .task-category-select {
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      outline: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+    }
+
+    .composer select {
+      width: 112px;
+      padding: 0 2px;
+    }
+
+    .composer select:focus,
+    .task-category-select:focus { border-color: var(--accent); }
+
+    input::placeholder { color: var(--faint); }
+
+    .add-button {
+      align-self: center;
+      min-width: 92px;
+      padding: 10px 17px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: var(--accent);
+      color: #ffffff;
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: .06em;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+
+    .add-button:hover {
+      background: #000000;
+      box-shadow: 0 5px 14px var(--shadow);
+      transform: translateY(-1px);
+    }
+
+    .add-button:active { transform: translateY(0); }
+
+    .task-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .task {
+      position: relative;
+      padding: 0 1px 33px;
+      animation: settle .32s ease both;
+    }
+
+    .task + .task {
+      padding-top: 27px;
+      border-top: 1px solid var(--line);
+    }
+
+    .task-head {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      align-items: baseline;
+      gap: 11px;
+    }
+
+    .check-wrap {
+      position: relative;
+      align-self: start;
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+    }
+
+    .check-wrap input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .checkmark {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid #222222;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color .18s ease, background .18s ease;
+    }
+
+    .checkmark::after {
+      content: "";
+      width: 8px;
+      height: 4px;
+      margin-top: -2px;
+      border-left: 1.7px solid white;
+      border-bottom: 1.7px solid white;
+      opacity: 0;
+      transform: rotate(-45deg) scale(.4);
+      transition: opacity .15s ease, transform .18s ease;
+    }
+
+    .check-wrap input:checked + .checkmark {
+      border-color: var(--accent);
+      background: var(--accent);
+    }
+
+    .check-wrap input:checked + .checkmark::after {
+      opacity: 1;
+      transform: rotate(-45deg) scale(1);
+    }
+
+    .check-wrap input:focus-visible + .checkmark {
+      outline: 3px solid var(--accent-soft);
+      outline-offset: 3px;
+    }
+
+    .task-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+      text-decoration-thickness: 1px;
+      text-decoration-color: #8a8a8a;
+      transition: color .2s ease;
+    }
+
+    time {
+      color: var(--faint);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .015em;
+      white-space: nowrap;
+      transition: color .2s ease;
+    }
+
+    .time-knot {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      padding-left: 18px;
+    }
+
+    .time-knot::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: -3px;
+      width: 1px;
+      height: calc(100% + 6px);
+      background: currentColor;
+      opacity: .42;
+    }
+
+    .time-knot::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border: 1px solid var(--accent);
+      border-radius: 50% 50% 50% 0;
+      background: var(--paper);
+      box-shadow: 0 0 0 2px var(--paper);
+      transform: translateY(-50%) rotate(45deg);
+      transition: border-color .2s ease;
+    }
+
+    .task-timeline {
+      position: relative;
+      margin: 7px 0 0 48px;
+      padding-left: 20px;
+    }
+
+    .task-timeline::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 1px;
+      bottom: 1px;
+      width: 1px;
+      background: var(--faint);
+      opacity: .48;
+      transition: background .2s ease;
+    }
+
+    .timeline-row,
+    .task-timeline .note {
+      position: relative;
+    }
+
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      min-height: 20px;
+    }
+
+    .timeline-row::before,
+    .task-timeline .note::before {
+      content: "";
+      position: absolute;
+      left: -18px;
+      width: 6px;
+      height: 6px;
+      border: 1px solid var(--accent);
+      border-radius: 50% 50% 50% 0;
+      background: var(--paper);
+      box-shadow: 0 0 0 2px var(--paper);
+      transform: rotate(45deg);
+      transition: border-color .2s ease;
+    }
+
+    .timeline-row::before { top: 6px; }
+
+    .timeline-time { display: inline-block; }
+
+    .notes-block { margin-top: 3px; }
+
+    .notes-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 48px;
+      padding: 4px 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+      transition: color .15s ease;
+    }
+
+    .notes-toggle:hover { color: var(--accent); }
+
+    .toggle-mark {
+      display: inline-block;
+      font-size: 15px;
+      line-height: 1;
+      transform: translateY(-1px);
+      transition: transform .18s ease;
+    }
+
+    .notes-toggle[aria-expanded="true"] .toggle-mark {
+      transform: translateY(1px) rotate(180deg);
+    }
+
+    .notes {
+      margin: 5px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .note {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      padding: 6px 0 8px;
+      color: #444444;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .task-timeline .note::before { bottom: 10px; }
+
+    .task-timeline .notes-toggle { margin-left: 0; }
+
+    .task-timeline .note time { align-self: flex-start; }
+
+    .note-text { overflow-wrap: anywhere; }
+
+    .task-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      margin: 11px 0 0 48px;
+    }
+
+    .note-trigger,
+    .note-cancel,
+    .archive-button {
+      padding: 3px 0;
+      border: 0;
+      border-bottom: 1px solid transparent;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+      transition: border-color .15s ease, color .15s ease;
+    }
+
+    .archive-button { color: var(--muted); }
+
+    .task-category-select {
+      max-width: 96px;
+      padding: 3px 18px 3px 0;
+      border-bottom-color: transparent;
+    }
+
+    .note-trigger:hover,
+    .note-cancel:hover,
+    .archive-button:hover { border-bottom-color: currentColor; }
+
+    .note-form {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      align-items: center;
+      flex-basis: 100%;
+      margin-top: 8px;
+    }
+
+    .note-form.is-open { display: grid; }
+
+    .note-form input {
+      min-height: 36px;
+      padding: 4px 1px;
+      font-size: 14px;
+    }
+
+    .note-submit {
+      padding: 7px 13px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+    }
+
+    .note-submit:hover { background: var(--accent-soft); }
+
+    .task.is-done .task-title {
+      color: #8a8a8a;
+      text-decoration-line: line-through;
+    }
+
+    .task.is-done .note,
+    .task.is-done .note time,
+    .task.is-done .timeline-time { color: #aaaaaa; }
+
+    .task.is-done .notes-toggle { color: #a0a0a0; }
+
+    .task.is-done .time-knot::after { border-color: #a0a0a0; }
+
+    .task.is-done .task-timeline::before { background: #aaaaaa; }
+
+    .task.is-done .timeline-row::before,
+    .task.is-done .task-timeline .note::before { border-color: #a0a0a0; }
+
+    .page-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 20px;
+      margin: 31px 0 24px;
+    }
+
+    .page-heading h2 {
+      margin: 0;
+      font-size: 25px;
+      font-weight: 500;
+      letter-spacing: -.03em;
+    }
+
+    .page-heading p {
+      margin: 0;
+      color: var(--faint);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 11px;
+    }
+
+    .category-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      margin-bottom: 34px;
+    }
+
+    .category-form input {
+      min-height: 40px;
+      padding: 4px 2px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .category-form input:focus { border-color: var(--accent); }
+
+    .small-button {
+      align-self: center;
+      padding: 8px 15px;
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+    }
+
+    .small-button:hover { background: var(--accent-soft); }
+
+    .category-list { border-top: 1px solid var(--line); }
+
+    .category-group {
+      padding: 22px 1px 25px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .category-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 13px;
+    }
+
+    .category-title h3 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    .category-count,
+    .category-empty,
+    .archive-meta {
+      color: var(--faint);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 11px;
+    }
+
+    .archive-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+    }
+
+    .category-items,
+    .archive-items {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .category-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      padding: 7px 0;
+      color: #333333;
+      font-size: 14px;
+    }
+
+    .category-item.is-done .category-item-text {
+      color: #8a8a8a;
+      text-decoration: line-through;
+    }
+
+    .archive-content {
+      padding-top: 2px;
+      border-top: 1px solid var(--line);
+    }
+
+    .archive-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, .1);
+    }
+
+    .archive-name {
+      display: block;
+      margin-bottom: 3px;
+      color: #555555;
+      font-size: 14px;
+    }
+
+    .restore-button {
+      padding: 3px 0;
+      border: 0;
+      border-bottom: 1px solid transparent;
+      background: transparent;
+      color: var(--accent);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+    }
+
+    .restore-button:hover { border-bottom-color: currentColor; }
+
+    .status-message {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 5;
+      max-width: calc(100% - 40px);
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .96);
+      box-shadow: 0 6px 22px var(--shadow);
+      color: var(--muted);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+    }
+
+    .empty {
+      display: none;
+      padding: 42px 0;
+      color: var(--faint);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .empty.is-visible { display: block; }
+
+    .hint {
+      margin-top: 34px;
+      color: var(--faint);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    @keyframes settle {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 580px) {
+      .shell {
+        width: 100%;
+        padding: max(30px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(54px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      }
+
+      header {
+        align-items: start;
+        padding-bottom: 20px;
+      }
+
+      h1 { font-size: 40px; }
+
+      .eyebrow {
+        margin-bottom: 8px;
+        font-size: 10px;
+      }
+
+      .summary {
+        padding-top: 8px;
+        font-size: 11px;
+      }
+
+      .page-nav {
+        gap: 24px;
+        padding-top: 10px;
+      }
+
+      .page-nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+        padding-bottom: 8px;
+      }
+
+      .composer {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 13px;
+        margin: 22px 0 34px;
+      }
+
+      .composer input { grid-column: 1 / -1; }
+
+      .composer select { width: 120px; }
+
+      .composer select,
+      .task-category-select,
+      .note-form input,
+      .category-form input { font-size: 16px; }
+
+      .add-button {
+        justify-self: end;
+        min-width: 84px;
+      }
+
+      .task-head {
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .task-title { font-size: 17px; }
+
+      .task { padding-bottom: 29px; }
+
+      .task + .task { padding-top: 24px; }
+
+      .task-timeline,
+      .task-actions { margin-left: 43px; }
+
+      .task-actions { gap: 6px 14px; }
+
+      .note {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+
+      .note-form {
+        grid-template-columns: 1fr auto;
+      }
+
+      .note-form input { grid-column: 1 / -1; }
+
+      .page-heading {
+        align-items: flex-start;
+        margin: 25px 0 21px;
+      }
+
+      .page-heading h2 { font-size: 23px; }
+
+      .page-heading p {
+        max-width: 155px;
+        padding-top: 2px;
+        line-height: 1.45;
+        text-align: right;
+      }
+
+      .category-form { margin-bottom: 29px; }
+
+      .category-group { padding: 19px 1px 22px; }
+
+      .category-item {
+        gap: 10px;
+        padding: 8px 0;
+      }
+
+      .archive-row { padding: 14px 0; }
+
+      .status-message {
+        right: max(16px, env(safe-area-inset-right));
+        bottom: max(16px, env(safe-area-inset-bottom));
+      }
+    }
+
+    @media (max-width: 360px) {
+      .shell {
+        padding-right: max(14px, env(safe-area-inset-right));
+        padding-left: max(14px, env(safe-area-inset-left));
+      }
+
+      .page-nav { gap: 20px; }
+
+      .task-actions { gap: 6px 11px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <span class="eyebrow">memo &amp; progress</span>
+        <h1>一现</h1>
+      </div>
+      <div class="summary" id="summary" aria-live="polite"></div>
+    </header>
+
+    <nav class="page-nav" aria-label="页面导航">
+      <a href="#home" data-view-link="home">主页</a>
+      <a href="#categories" data-view-link="categories">类别</a>
+      <a href="#archive" data-view-link="archive">归档</a>
+    </nav>
+
+    <section class="view" id="home-view" aria-labelledby="home-nav-label">
+      <span id="home-nav-label" hidden>主页</span>
+      <form class="composer" id="task-form">
+        <label for="task-input" hidden>写下一个待办或想法</label>
+        <input id="task-input" type="text" maxlength="160" autocomplete="off" placeholder="写下一件想做的事……" required>
+        <label for="task-category" hidden>选择类别</label>
+        <select id="task-category" aria-label="选择类别"></select>
+        <button class="add-button" type="submit">记下来</button>
+      </form>
+
+      <ul class="task-list" id="task-list" aria-label="待办列表"></ul>
+      <p class="empty" id="empty">这里暂时是空白的，写下第一件事吧。</p>
+      <p class="hint">勾选方框可标记完成；归档后会离开主页，并可在“归档”页面恢复。<br>每件事都可以反复“记进展”。</p>
+    </section>
+
+    <section class="view" id="categories-view" aria-labelledby="categories-title" hidden>
+      <div class="page-heading">
+        <h2 id="categories-title">类别</h2>
+        <p>按类别回看正在进行的事</p>
+      </div>
+
+      <form class="category-form" id="category-form">
+        <label for="category-input" hidden>新类别名称</label>
+        <input id="category-input" type="text" maxlength="24" autocomplete="off" placeholder="新建一个类别……" required>
+        <button class="small-button" type="submit">添加类别</button>
+      </form>
+
+      <div class="category-list" id="category-list"></div>
+    </section>
+
+    <section class="view" id="archive-view" aria-labelledby="archive-title" hidden>
+      <div class="page-heading">
+        <h2 id="archive-title">归档</h2>
+        <p id="archive-count">0 条记录</p>
+      </div>
+      <div class="archive-content" id="archive-content"></div>
+    </section>
+  </main>
+
+  <div class="status-message" id="status-message" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    (() => {
+      document.title = "一现 · 待办与进展";
+      const TASK_STORAGE_KEY = "liu-yi-bi-tasks-v2";
+      const CATEGORY_STORAGE_KEY = "liu-yi-bi-categories-v1";
+      const DEFAULT_CATEGORIES = [
+        { id: "uncategorized", name: "未分类" },
+        { id: "ideas", name: "灵感" },
+        { id: "life", name: "生活" },
+        { id: "work", name: "工作" }
+      ];
+      const example = [{
+        id: "example-app-idea",
+        text: "突然想做一个app",
+        createdAt: "26/9/26 15:37",
+        done: false,
+        archived: false,
+        categoryId: "ideas",
+        notes: [{ id: "example-note", text: "在ai加持下尝试了一下", createdAt: "26/10/1 15:22" }]
+      }];
+
+      const taskForm = document.querySelector("#task-form");
+      const taskInput = document.querySelector("#task-input");
+      const taskCategory = document.querySelector("#task-category");
+      const taskList = document.querySelector("#task-list");
+      const summary = document.querySelector("#summary");
+      const empty = document.querySelector("#empty");
+      const homeView = document.querySelector("#home-view");
+      const categoriesView = document.querySelector("#categories-view");
+      const archiveView = document.querySelector("#archive-view");
+      const categoryForm = document.querySelector("#category-form");
+      const categoryInput = document.querySelector("#category-input");
+      const categoryList = document.querySelector("#category-list");
+      const archiveCount = document.querySelector("#archive-count");
+      const archiveContent = document.querySelector("#archive-content");
+      const statusMessage = document.querySelector("#status-message");
+
+      let categories = loadCategories();
+      let tasks = loadTasks().map(normalizeTask);
+      let statusTimer;
+
+      function loadTasks() {
+        try {
+          const stored = localStorage.getItem(TASK_STORAGE_KEY);
+          return stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(example));
+        } catch (_) {
+          return JSON.parse(JSON.stringify(example));
+        }
+      }
+
+      function saveTasks() {
+        localStorage.setItem(TASK_STORAGE_KEY, JSON.stringify(tasks));
+      }
+
+      function loadCategories() {
+        try {
+          const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
+          const parsed = stored ? JSON.parse(stored) : JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+          if (!parsed.some(category => category.id === "uncategorized")) {
+            parsed.unshift({ id: "uncategorized", name: "未分类" });
+          }
+          return parsed;
+        } catch (_) {
+          return JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+        }
+      }
+
+      function saveCategories() {
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+      }
+
+      function normalizeTask(task) {
+        const categoryExists = categories.some(category => category.id === task.categoryId);
+        return {
+          ...task,
+          archived: Boolean(task.archived),
+          categoryId: categoryExists
+            ? task.categoryId
+            : task.id === "example-app-idea" ? "ideas" : "uncategorized",
+          notes: Array.isArray(task.notes) ? task.notes : []
+        };
+      }
+
+      function makeId() {
+        return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function formatNow(date = new Date()) {
+        const yy = String(date.getFullYear()).slice(-2);
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const hour = String(date.getHours()).padStart(2, "0");
+        const minute = String(date.getMinutes()).padStart(2, "0");
+        return `${yy}/${month}/${day} ${hour}:${minute}`;
+      }
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = String(value);
+        return div.innerHTML;
+      }
+
+      function render() {
+        const activeTasks = tasks.filter(task => !task.archived);
+        const openCount = activeTasks.filter(task => !task.done).length;
+        const selectedCategory = taskCategory.value || "uncategorized";
+        summary.textContent = `未完成 ${openCount} · 共 ${activeTasks.length}`;
+        empty.classList.toggle("is-visible", activeTasks.length === 0);
+        taskCategory.innerHTML = categoryOptions(selectedCategory);
+
+        taskList.innerHTML = activeTasks.map(task => {
+          const notes = task.notes.map(note => `
+            <li class="note">
+              <span class="note-text">${escapeHtml(note.text)}</span>
+              <time datetime="${escapeHtml(note.createdAt)}">${escapeHtml(note.createdAt)}</time>
+            </li>`).join("");
+
+          return `
+            <li class="task${task.done ? " is-done" : ""}" data-task-id="${task.id}">
+              <div class="task-head">
+                <label class="check-wrap" title="${task.done ? "恢复未完成" : "标记为完成"}">
+                  <input class="task-check" type="checkbox" ${task.done ? "checked" : ""} aria-label="${task.done ? "恢复" : "完成"}：${escapeHtml(task.text)}">
+                  <span class="checkmark" aria-hidden="true"></span>
+                </label>
+                <p class="task-title">${escapeHtml(task.text)}</p>
+              </div>
+              <div class="task-timeline">
+                <div class="timeline-row">
+                  <time class="timeline-time" datetime="${escapeHtml(task.createdAt)}">${escapeHtml(task.createdAt)}</time>
+                </div>
+                ${notes ? `
+                  <div class="notes-block">
+                    <button class="notes-toggle" type="button" aria-expanded="false" aria-controls="notes-${task.id}">
+                      <span>${task.notes.length} 条进展</span>
+                      <span class="toggle-mark" aria-hidden="true">⌄</span>
+                    </button>
+                    <ul class="notes" id="notes-${task.id}" aria-label="进展记录" hidden>${notes}</ul>
+                  </div>` : ""}
+              </div>
+              <div class="task-actions">
+                <button class="note-trigger" type="button">＋ 记进展</button>
+                <select class="task-category-select" aria-label="更改“${escapeHtml(task.text)}”的类别">
+                  ${categoryOptions(task.categoryId)}
+                </select>
+                <button class="archive-button" type="button">归档</button>
+                <form class="note-form">
+                  <input class="note-input" type="text" maxlength="200" autocomplete="off" placeholder="写下新的进展……" aria-label="写下新的进展" required>
+                  <button class="note-submit" type="submit">记下</button>
+                  <button class="note-cancel" type="button">取消</button>
+                </form>
+              </div>
+            </li>`;
+        }).join("");
+
+        renderCategories();
+        renderArchive();
+        syncView();
+      }
+
+      function categoryOptions(selectedId) {
+        return categories.map(category => `
+          <option value="${escapeHtml(category.id)}" ${category.id === selectedId ? "selected" : ""}>${escapeHtml(category.name)}</option>`).join("");
+      }
+
+      function categoryName(categoryId) {
+        return categories.find(category => category.id === categoryId)?.name || "未分类";
+      }
+
+      function renderCategories() {
+        const activeTasks = tasks.filter(task => !task.archived);
+
+        categoryList.innerHTML = categories.map(category => {
+          const groupedTasks = activeTasks.filter(task => task.categoryId === category.id);
+          const items = groupedTasks.map(task => `
+            <li class="category-item${task.done ? " is-done" : ""}">
+              <span class="category-item-text">${escapeHtml(task.text)}</span>
+              <time class="time-knot" datetime="${escapeHtml(task.createdAt)}">${escapeHtml(task.createdAt)}</time>
+            </li>`).join("");
+
+          return `
+            <section class="category-group">
+              <div class="category-title">
+                <h3>${escapeHtml(category.name)}</h3>
+                <span class="category-count">${groupedTasks.length} 件</span>
+              </div>
+              ${items ? `<ul class="category-items">${items}</ul>` : `<span class="category-empty">暂无待办</span>`}
+            </section>`;
+        }).join("");
+      }
+
+      function renderArchive() {
+        const archivedTasks = tasks.filter(task => task.archived);
+
+        archiveCount.textContent = `${archivedTasks.length} 条记录`;
+        archiveContent.innerHTML = archivedTasks.length ? `
+          <ul class="archive-items">
+            ${archivedTasks.map(task => `
+              <li class="archive-row" data-task-id="${task.id}">
+                <div>
+                  <span class="archive-name">${escapeHtml(task.text)}</span>
+                  <span class="archive-meta">
+                    <span>${escapeHtml(categoryName(task.categoryId))}</span>
+                    <time class="time-knot" datetime="${escapeHtml(task.createdAt)}">${escapeHtml(task.createdAt)}</time>
+                  </span>
+                </div>
+                <button class="restore-button" type="button">恢复</button>
+              </li>`).join("")}
+          </ul>` : `<p class="category-empty">还没有归档的待办。</p>`;
+      }
+
+      function syncView() {
+        const view = location.hash === "#categories"
+          ? "categories"
+          : location.hash === "#archive" ? "archive" : "home";
+        homeView.hidden = view !== "home";
+        categoriesView.hidden = view !== "categories";
+        archiveView.hidden = view !== "archive";
+        document.querySelectorAll("[data-view-link]").forEach(link => {
+          const active = link.dataset.viewLink === view;
+          link.classList.toggle("is-active", active);
+          if (active) link.setAttribute("aria-current", "page");
+          else link.removeAttribute("aria-current");
+        });
+      }
+
+      function showStatus(message) {
+        clearTimeout(statusTimer);
+        statusMessage.textContent = message;
+        statusMessage.hidden = false;
+        statusTimer = setTimeout(() => {
+          statusMessage.hidden = true;
+        }, 2600);
+      }
+
+      taskForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const text = taskInput.value.trim();
+        if (!text) return;
+        tasks.unshift({
+          id: makeId(),
+          text,
+          createdAt: formatNow(),
+          done: false,
+          archived: false,
+          categoryId: taskCategory.value || "uncategorized",
+          notes: []
+        });
+        saveTasks();
+        render();
+        taskInput.value = "";
+        taskInput.focus();
+      });
+
+      taskList.addEventListener("change", event => {
+        const taskElement = event.target.closest(".task");
+        if (!taskElement) return;
+        const task = tasks.find(item => item.id === taskElement.dataset.taskId);
+        if (!task) return;
+
+        if (event.target.matches(".task-check")) task.done = event.target.checked;
+        else if (event.target.matches(".task-category-select")) task.categoryId = event.target.value;
+        else return;
+
+        saveTasks();
+        render();
+      });
+
+      taskList.addEventListener("click", event => {
+        const taskElement = event.target.closest(".task");
+        if (!taskElement) return;
+        const form = taskElement.querySelector(".note-form");
+
+        const notesToggle = event.target.closest(".notes-toggle");
+        if (notesToggle) {
+          const notesList = taskElement.querySelector(".notes");
+          const willExpand = notesToggle.getAttribute("aria-expanded") !== "true";
+          notesToggle.setAttribute("aria-expanded", String(willExpand));
+          notesList.hidden = !willExpand;
+        }
+
+        if (event.target.closest(".note-trigger")) {
+          form.classList.add("is-open");
+          event.target.closest(".note-trigger").hidden = true;
+          form.querySelector("input").focus();
+        }
+
+        if (event.target.closest(".note-cancel")) closeNoteForm(taskElement);
+
+        if (event.target.closest(".archive-button")) {
+          const task = tasks.find(item => item.id === taskElement.dataset.taskId);
+          if (!task) return;
+          task.archived = true;
+          saveTasks();
+          render();
+          showStatus("已归档，可在“归档”页面恢复");
+        }
+      });
+
+      taskList.addEventListener("submit", event => {
+        if (!event.target.matches(".note-form")) return;
+        event.preventDefault();
+        const taskElement = event.target.closest(".task");
+        const input = event.target.querySelector(".note-input");
+        const text = input.value.trim();
+        if (!text) return;
+        const task = tasks.find(item => item.id === taskElement.dataset.taskId);
+        if (!task) return;
+        task.notes.push({ id: makeId(), text, createdAt: formatNow() });
+        saveTasks();
+        render();
+      });
+
+      taskList.addEventListener("keydown", event => {
+        if (event.key === "Escape" && event.target.matches(".note-input")) {
+          closeNoteForm(event.target.closest(".task"));
+        }
+      });
+
+      categoryForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const name = categoryInput.value.trim();
+        if (!name) return;
+        const duplicate = categories.some(category => category.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+        if (duplicate) {
+          showStatus("这个类别已经存在");
+          categoryInput.select();
+          return;
+        }
+        const category = { id: `cat-${makeId()}`, name };
+        categories.push(category);
+        saveCategories();
+        categoryInput.value = "";
+        render();
+        taskCategory.value = category.id;
+        showStatus(`已添加类别“${name}”`);
+      });
+
+      archiveContent.addEventListener("click", event => {
+        const restoreButton = event.target.closest(".restore-button");
+        if (!restoreButton) return;
+        const row = restoreButton.closest(".archive-row");
+        const task = tasks.find(item => item.id === row.dataset.taskId);
+        if (!task) return;
+        task.archived = false;
+        saveTasks();
+        render();
+        showStatus("已恢复到主页");
+      });
+
+      window.addEventListener("hashchange", syncView);
+
+      function closeNoteForm(taskElement) {
+        const form = taskElement.querySelector(".note-form");
+        form.reset();
+        form.classList.remove("is-open");
+        const trigger = taskElement.querySelector(".note-trigger");
+        trigger.hidden = false;
+        trigger.focus();
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>
