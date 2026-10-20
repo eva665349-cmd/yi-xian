@@ -289,14 +289,27 @@
     }
 
     .task-title {
+      width: 100%;
       margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      cursor: text;
+      font-family: inherit;
       font-size: 18px;
       font-weight: 500;
       line-height: 1.5;
+      text-align: left;
       overflow-wrap: anywhere;
       text-decoration-thickness: 1px;
       text-decoration-color: #8a8a8a;
       transition: color .2s ease;
+    }
+
+    .task-title:focus-visible {
+      outline: 1px solid var(--ink);
+      outline-offset: 4px;
     }
 
     time {
@@ -457,7 +470,6 @@
     .note-trigger,
     .note-cancel,
     .archive-button,
-    .edit-button,
     .edit-cancel,
     .delete-button,
     .delete-cancel {
@@ -473,7 +485,6 @@
     }
 
     .archive-button,
-    .edit-button,
     .delete-button,
     .delete-cancel { color: var(--muted); }
 
@@ -486,7 +497,6 @@
     .note-trigger:hover,
     .note-cancel:hover,
     .archive-button:hover,
-    .edit-button:hover,
     .edit-cancel:hover,
     .delete-button:hover,
     .delete-cancel:hover { border-bottom-color: currentColor; }
@@ -684,9 +694,7 @@
     }
 
     .category-item {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 14px;
+      display: block;
       padding: 9px 0;
       color: #333333;
       font-size: 14px;
@@ -1096,7 +1104,7 @@
                   <input class="task-check" type="checkbox" ${task.done ? "checked" : ""} aria-label="${task.done ? "恢复" : "完成"}：${escapeHtml(task.text)}">
                   <span class="checkmark" aria-hidden="true"></span>
                 </label>
-                <p class="task-title">${escapeHtml(task.text)}</p>
+                <button class="task-title" type="button" aria-label="编辑待办：${escapeHtml(task.text)}">${escapeHtml(task.text)}</button>
               </div>
               <div class="task-timeline">
                 <div class="timeline-row">
@@ -1113,7 +1121,6 @@
               </div>
               <div class="task-actions">
                 <button class="note-trigger" type="button">＋ 记进展</button>
-                <button class="edit-button" type="button">编辑</button>
                 <select class="task-category-select" aria-label="更改“${escapeHtml(task.text)}”的类别">
                   ${categoryOptions(task.categoryId)}
                 </select>
@@ -1160,7 +1167,6 @@
           const items = groupedTasks.map(task => `
             <li class="category-item${task.done ? " is-done" : ""}">
               <span class="category-item-text">${escapeHtml(task.text)}</span>
-              <time class="time-knot" datetime="${escapeHtml(task.createdAt)}">${escapeHtml(task.createdAt)}</time>
             </li>`).join("");
 
           return `
@@ -1274,7 +1280,7 @@
 
         if (event.target.closest(".note-cancel")) closeNoteForm(taskElement);
 
-        if (event.target.closest(".edit-button")) {
+        if (event.target.closest(".task-title")) {
           closeNoteForm(taskElement, false);
           closeDeleteConfirm(taskElement, false);
           const task = tasks.find(item => item.id === taskElement.dataset.taskId);
@@ -1283,7 +1289,6 @@
           const editInput = editForm.querySelector(".edit-input");
           editInput.value = task.text;
           editForm.classList.add("is-open");
-          taskElement.querySelector(".edit-button").hidden = true;
           editInput.focus();
           editInput.select();
         }
@@ -1400,8 +1405,7 @@
         const form = taskElement.querySelector(".edit-form");
         form.reset();
         form.classList.remove("is-open");
-        const trigger = taskElement.querySelector(".edit-button");
-        trigger.hidden = false;
+        const trigger = taskElement.querySelector(".task-title");
         if (restoreFocus) trigger.focus();
       }
 
