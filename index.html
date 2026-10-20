@@ -456,7 +456,11 @@
 
     .note-trigger,
     .note-cancel,
-    .archive-button {
+    .archive-button,
+    .edit-button,
+    .edit-cancel,
+    .delete-button,
+    .delete-cancel {
       padding: 3px 0;
       border: 0;
       border-bottom: 1px solid transparent;
@@ -468,7 +472,10 @@
       transition: border-color .15s ease, color .15s ease;
     }
 
-    .archive-button { color: var(--muted); }
+    .archive-button,
+    .edit-button,
+    .delete-button,
+    .delete-cancel { color: var(--muted); }
 
     .task-category-select {
       max-width: 96px;
@@ -478,9 +485,14 @@
 
     .note-trigger:hover,
     .note-cancel:hover,
-    .archive-button:hover { border-bottom-color: currentColor; }
+    .archive-button:hover,
+    .edit-button:hover,
+    .edit-cancel:hover,
+    .delete-button:hover,
+    .delete-cancel:hover { border-bottom-color: currentColor; }
 
-    .note-form {
+    .note-form,
+    .edit-form {
       display: none;
       grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 10px;
@@ -489,15 +501,28 @@
       margin-top: 8px;
     }
 
-    .note-form.is-open { display: grid; }
+    .note-form.is-open,
+    .edit-form.is-open { display: grid; }
 
-    .note-form input {
+    .note-form input,
+    .edit-form input {
       min-height: 36px;
       padding: 4px 1px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
       font-size: 14px;
     }
 
-    .note-submit {
+    .note-form input:focus,
+    .edit-form input:focus { border-color: var(--accent); }
+
+    .note-submit,
+    .edit-submit,
+    .delete-confirm-button {
       padding: 7px 13px;
       border: 1px solid var(--accent);
       border-radius: 999px;
@@ -508,7 +533,26 @@
       font-size: 12px;
     }
 
-    .note-submit:hover { background: var(--accent-soft); }
+    .note-submit:hover,
+    .edit-submit:hover { background: var(--accent-soft); }
+
+    .delete-confirm {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-basis: 100%;
+      margin-top: 8px;
+      color: var(--muted);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+    }
+
+    .delete-confirm[hidden] { display: none; }
+
+    .delete-confirm-button {
+      background: var(--ink);
+      color: var(--paper);
+    }
 
     .task.is-done .task-title {
       color: #8a8a8a;
@@ -583,11 +627,24 @@
 
     .small-button:hover { background: var(--accent-soft); }
 
-    .category-list { border-top: 1px solid var(--line); }
+    .category-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
 
     .category-group {
-      padding: 22px 1px 25px;
-      border-bottom: 1px solid var(--line);
+      min-height: 148px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      transition: border-color .18s ease, transform .18s ease;
+    }
+
+    .category-group:hover {
+      border-color: rgba(0, 0, 0, .32);
+      transform: translateY(-1px);
     }
 
     .category-title {
@@ -630,10 +687,12 @@
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 14px;
-      padding: 7px 0;
+      padding: 9px 0;
       color: #333333;
       font-size: 14px;
     }
+
+    .category-item + .category-item { border-top: 1px solid rgba(0, 0, 0, .08); }
 
     .category-item.is-done .category-item-text {
       color: #8a8a8a;
@@ -761,6 +820,7 @@
       .composer select,
       .task-category-select,
       .note-form input,
+      .edit-form input,
       .category-form input { font-size: 16px; }
 
       .add-button {
@@ -793,7 +853,10 @@
         grid-template-columns: 1fr auto;
       }
 
-      .note-form input { grid-column: 1 / -1; }
+      .note-form input,
+      .edit-form input { grid-column: 1 / -1; }
+
+      .edit-form { grid-template-columns: 1fr auto; }
 
       .page-heading {
         align-items: flex-start;
@@ -811,7 +874,13 @@
 
       .category-form { margin-bottom: 29px; }
 
-      .category-group { padding: 19px 1px 22px; }
+      .category-list { grid-template-columns: 1fr; }
+
+      .category-group {
+        min-height: 0;
+        padding: 18px;
+        border-radius: 14px;
+      }
 
       .category-item {
         gap: 10px;
@@ -1044,15 +1113,27 @@
               </div>
               <div class="task-actions">
                 <button class="note-trigger" type="button">＋ 记进展</button>
+                <button class="edit-button" type="button">编辑</button>
                 <select class="task-category-select" aria-label="更改“${escapeHtml(task.text)}”的类别">
                   ${categoryOptions(task.categoryId)}
                 </select>
                 <button class="archive-button" type="button">归档</button>
+                <button class="delete-button" type="button">删除</button>
                 <form class="note-form">
                   <input class="note-input" type="text" maxlength="200" autocomplete="off" placeholder="写下新的进展……" aria-label="写下新的进展" required>
                   <button class="note-submit" type="submit">记下</button>
                   <button class="note-cancel" type="button">取消</button>
                 </form>
+                <form class="edit-form">
+                  <input class="edit-input" type="text" maxlength="160" autocomplete="off" aria-label="编辑待办内容" required>
+                  <button class="edit-submit" type="submit">保存</button>
+                  <button class="edit-cancel" type="button">取消</button>
+                </form>
+                <div class="delete-confirm" role="alert" hidden>
+                  <span>删除后无法恢复，确定吗？</span>
+                  <button class="delete-confirm-button" type="button">确定删除</button>
+                  <button class="delete-cancel" type="button">取消</button>
+                </div>
               </div>
             </li>`;
         }).join("");
@@ -1184,12 +1265,48 @@
         }
 
         if (event.target.closest(".note-trigger")) {
+          closeEditForm(taskElement, false);
+          closeDeleteConfirm(taskElement, false);
           form.classList.add("is-open");
           event.target.closest(".note-trigger").hidden = true;
           form.querySelector("input").focus();
         }
 
         if (event.target.closest(".note-cancel")) closeNoteForm(taskElement);
+
+        if (event.target.closest(".edit-button")) {
+          closeNoteForm(taskElement, false);
+          closeDeleteConfirm(taskElement, false);
+          const task = tasks.find(item => item.id === taskElement.dataset.taskId);
+          if (!task) return;
+          const editForm = taskElement.querySelector(".edit-form");
+          const editInput = editForm.querySelector(".edit-input");
+          editInput.value = task.text;
+          editForm.classList.add("is-open");
+          taskElement.querySelector(".edit-button").hidden = true;
+          editInput.focus();
+          editInput.select();
+        }
+
+        if (event.target.closest(".edit-cancel")) closeEditForm(taskElement);
+
+        if (event.target.closest(".delete-button")) {
+          closeNoteForm(taskElement, false);
+          closeEditForm(taskElement, false);
+          taskElement.querySelector(".delete-confirm").hidden = false;
+          taskElement.querySelector(".delete-button").hidden = true;
+        }
+
+        if (event.target.closest(".delete-cancel")) closeDeleteConfirm(taskElement);
+
+        if (event.target.closest(".delete-confirm-button")) {
+          const taskId = taskElement.dataset.taskId;
+          tasks = tasks.filter(item => item.id !== taskId);
+          saveTasks();
+          render();
+          showStatus("已删除待办");
+          return;
+        }
 
         if (event.target.closest(".archive-button")) {
           const task = tasks.find(item => item.id === taskElement.dataset.taskId);
@@ -1202,22 +1319,38 @@
       });
 
       taskList.addEventListener("submit", event => {
-        if (!event.target.matches(".note-form")) return;
         event.preventDefault();
         const taskElement = event.target.closest(".task");
-        const input = event.target.querySelector(".note-input");
-        const text = input.value.trim();
-        if (!text) return;
         const task = tasks.find(item => item.id === taskElement.dataset.taskId);
         if (!task) return;
-        task.notes.push({ id: makeId(), text, createdAt: formatNow() });
-        saveTasks();
-        render();
+
+        if (event.target.matches(".note-form")) {
+          const input = event.target.querySelector(".note-input");
+          const text = input.value.trim();
+          if (!text) return;
+          task.notes.push({ id: makeId(), text, createdAt: formatNow() });
+          saveTasks();
+          render();
+          return;
+        }
+
+        if (event.target.matches(".edit-form")) {
+          const input = event.target.querySelector(".edit-input");
+          const text = input.value.trim();
+          if (!text) return;
+          task.text = text;
+          saveTasks();
+          render();
+          showStatus("已更新待办");
+        }
       });
 
       taskList.addEventListener("keydown", event => {
         if (event.key === "Escape" && event.target.matches(".note-input")) {
           closeNoteForm(event.target.closest(".task"));
+        }
+        if (event.key === "Escape" && event.target.matches(".edit-input")) {
+          closeEditForm(event.target.closest(".task"));
         }
       });
 
@@ -1254,13 +1387,29 @@
 
       window.addEventListener("hashchange", syncView);
 
-      function closeNoteForm(taskElement) {
+      function closeNoteForm(taskElement, restoreFocus = true) {
         const form = taskElement.querySelector(".note-form");
         form.reset();
         form.classList.remove("is-open");
         const trigger = taskElement.querySelector(".note-trigger");
         trigger.hidden = false;
-        trigger.focus();
+        if (restoreFocus) trigger.focus();
+      }
+
+      function closeEditForm(taskElement, restoreFocus = true) {
+        const form = taskElement.querySelector(".edit-form");
+        form.reset();
+        form.classList.remove("is-open");
+        const trigger = taskElement.querySelector(".edit-button");
+        trigger.hidden = false;
+        if (restoreFocus) trigger.focus();
+      }
+
+      function closeDeleteConfirm(taskElement, restoreFocus = true) {
+        taskElement.querySelector(".delete-confirm").hidden = true;
+        const trigger = taskElement.querySelector(".delete-button");
+        trigger.hidden = false;
+        if (restoreFocus) trigger.focus();
       }
 
       render();
