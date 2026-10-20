@@ -307,6 +307,10 @@
       transition: color .2s ease;
     }
 
+    .task-title-slot { min-width: 0; }
+
+    .task-title[hidden] { display: none; }
+
     .task-title:focus-visible {
       outline: 1px solid var(--ink);
       outline-offset: 4px;
@@ -457,7 +461,22 @@
 
     .task-timeline .note time { align-self: flex-start; }
 
-    .note-text { overflow-wrap: anywhere; }
+    .note-edit-slot { min-width: 0; }
+
+    .note-text {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: text;
+      font: inherit;
+      line-height: inherit;
+      text-align: left;
+      overflow-wrap: anywhere;
+    }
+
+    .note-text[hidden] { display: none; }
 
     .task-actions {
       display: flex;
@@ -471,6 +490,8 @@
     .note-cancel,
     .archive-button,
     .edit-cancel,
+    .note-edit-submit,
+    .note-edit-cancel,
     .delete-button,
     .delete-cancel {
       padding: 3px 0;
@@ -485,24 +506,32 @@
     }
 
     .archive-button,
+    .note-edit-cancel,
     .delete-button,
     .delete-cancel { color: var(--muted); }
 
     .task-category-select {
-      max-width: 96px;
-      padding: 3px 18px 3px 0;
+      max-width: 90px;
+      padding: 3px 12px 3px 0;
       border-bottom-color: transparent;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' fill='none' stroke='%23777777' stroke-width='1.2'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1px center;
+      background-size: 8px 5px;
     }
 
     .note-trigger:hover,
     .note-cancel:hover,
     .archive-button:hover,
     .edit-cancel:hover,
+    .note-edit-submit:hover,
+    .note-edit-cancel:hover,
     .delete-button:hover,
     .delete-cancel:hover { border-bottom-color: currentColor; }
 
-    .note-form,
-    .edit-form {
+    .note-form {
       display: none;
       grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 10px;
@@ -511,11 +540,9 @@
       margin-top: 8px;
     }
 
-    .note-form.is-open,
-    .edit-form.is-open { display: grid; }
+    .note-form.is-open { display: grid; }
 
-    .note-form input,
-    .edit-form input {
+    .note-form input {
       min-height: 36px;
       padding: 4px 1px;
       border: 0;
@@ -527,8 +554,46 @@
       font-size: 14px;
     }
 
-    .note-form input:focus,
-    .edit-form input:focus { border-color: var(--accent); }
+    .note-form input:focus { border-color: var(--accent); }
+
+    .edit-form,
+    .note-edit-form {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+      margin: 0;
+    }
+
+    .edit-form {
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .note-edit-form {
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .edit-form.is-open,
+    .note-edit-form.is-open { display: grid; }
+
+    .edit-form input,
+    .note-edit-form input {
+      width: 100%;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: inherit;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+      line-height: inherit;
+    }
 
     .note-submit,
     .edit-submit,
@@ -568,6 +633,9 @@
       color: #8a8a8a;
       text-decoration-line: line-through;
     }
+
+    .task.is-done .edit-form input,
+    .task.is-done .note-edit-form input { color: #8a8a8a; }
 
     .task.is-done .note,
     .task.is-done .note time,
@@ -829,6 +897,7 @@
       .task-category-select,
       .note-form input,
       .edit-form input,
+      .note-edit-form input,
       .category-form input { font-size: 16px; }
 
       .add-button {
@@ -842,6 +911,8 @@
       }
 
       .task-title { font-size: 17px; }
+
+      .edit-form { font-size: 17px; }
 
       .task { padding-bottom: 29px; }
 
@@ -861,10 +932,13 @@
         grid-template-columns: 1fr auto;
       }
 
-      .note-form input,
-      .edit-form input { grid-column: 1 / -1; }
+      .note-form input { grid-column: 1 / -1; }
 
-      .edit-form { grid-template-columns: 1fr auto; }
+      .edit-form,
+      .note-edit-form {
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 6px;
+      }
 
       .page-heading {
         align-items: flex-start;
@@ -882,17 +956,33 @@
 
       .category-form { margin-bottom: 29px; }
 
-      .category-list { grid-template-columns: 1fr; }
+      .category-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
 
       .category-group {
         min-height: 0;
-        padding: 18px;
-        border-radius: 14px;
+        padding: 14px;
+        border-radius: 12px;
       }
 
+      .category-title {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .category-title h3 {
+        font-size: 15px;
+        overflow-wrap: anywhere;
+      }
+
+      .category-count { font-size: 10px; }
+
       .category-item {
-        gap: 10px;
         padding: 8px 0;
+        font-size: 13px;
       }
 
       .archive-row { padding: 14px 0; }
@@ -1076,6 +1166,13 @@
         return `${yy}/${month}/${day} ${hour}:${minute}`;
       }
 
+      function recordedTime(value) {
+        const match = String(value).match(/^(\d{2})\/(\d{1,2})\/(\d{1,2})\s+(\d{2}):(\d{2})$/);
+        if (!match) return 0;
+        const [, year, month, day, hour, minute] = match.map(Number);
+        return new Date(2000 + year, month - 1, day, hour, minute).getTime();
+      }
+
       function escapeHtml(value) {
         const div = document.createElement("div");
         div.textContent = String(value);
@@ -1083,7 +1180,10 @@
       }
 
       function render() {
-        const activeTasks = tasks.filter(task => !task.archived);
+        const activeTasks = tasks
+          .filter(task => !task.archived)
+          .slice()
+          .sort((a, b) => recordedTime(a.createdAt) - recordedTime(b.createdAt));
         const openCount = activeTasks.filter(task => !task.done).length;
         const selectedCategory = taskCategory.value || "uncategorized";
         summary.textContent = `未完成 ${openCount} · 共 ${activeTasks.length}`;
@@ -1092,8 +1192,15 @@
 
         taskList.innerHTML = activeTasks.map(task => {
           const notes = task.notes.map(note => `
-            <li class="note">
-              <span class="note-text">${escapeHtml(note.text)}</span>
+            <li class="note" data-note-id="${escapeHtml(note.id)}">
+              <div class="note-edit-slot">
+                <button class="note-text note-edit-trigger" type="button" aria-label="编辑进展：${escapeHtml(note.text)}">${escapeHtml(note.text)}</button>
+                <form class="note-edit-form">
+                  <input class="note-edit-input" type="text" maxlength="200" autocomplete="off" aria-label="编辑进展内容" required>
+                  <button class="note-edit-submit" type="submit">保存</button>
+                  <button class="note-edit-cancel" type="button">取消</button>
+                </form>
+              </div>
               <time datetime="${escapeHtml(note.createdAt)}">${escapeHtml(note.createdAt)}</time>
             </li>`).join("");
 
@@ -1104,7 +1211,14 @@
                   <input class="task-check" type="checkbox" ${task.done ? "checked" : ""} aria-label="${task.done ? "恢复" : "完成"}：${escapeHtml(task.text)}">
                   <span class="checkmark" aria-hidden="true"></span>
                 </label>
-                <button class="task-title" type="button" aria-label="编辑待办：${escapeHtml(task.text)}">${escapeHtml(task.text)}</button>
+                <div class="task-title-slot">
+                  <button class="task-title" type="button" aria-label="编辑待办：${escapeHtml(task.text)}">${escapeHtml(task.text)}</button>
+                  <form class="edit-form">
+                    <input class="edit-input" type="text" maxlength="160" autocomplete="off" aria-label="编辑待办内容" required>
+                    <button class="edit-submit" type="submit">保存</button>
+                    <button class="edit-cancel" type="button">取消</button>
+                  </form>
+                </div>
               </div>
               <div class="task-timeline">
                 <div class="timeline-row">
@@ -1130,11 +1244,6 @@
                   <input class="note-input" type="text" maxlength="200" autocomplete="off" placeholder="写下新的进展……" aria-label="写下新的进展" required>
                   <button class="note-submit" type="submit">记下</button>
                   <button class="note-cancel" type="button">取消</button>
-                </form>
-                <form class="edit-form">
-                  <input class="edit-input" type="text" maxlength="160" autocomplete="off" aria-label="编辑待办内容" required>
-                  <button class="edit-submit" type="submit">保存</button>
-                  <button class="edit-cancel" type="button">取消</button>
                 </form>
                 <div class="delete-confirm" role="alert" hidden>
                   <span>删除后无法恢复，确定吗？</span>
@@ -1228,7 +1337,7 @@
         event.preventDefault();
         const text = taskInput.value.trim();
         if (!text) return;
-        tasks.unshift({
+        tasks.push({
           id: makeId(),
           text,
           createdAt: formatNow(),
@@ -1272,6 +1381,7 @@
 
         if (event.target.closest(".note-trigger")) {
           closeEditForm(taskElement, false);
+          closeNoteEdits(taskElement);
           closeDeleteConfirm(taskElement, false);
           form.classList.add("is-open");
           event.target.closest(".note-trigger").hidden = true;
@@ -1282,6 +1392,7 @@
 
         if (event.target.closest(".task-title")) {
           closeNoteForm(taskElement, false);
+          closeNoteEdits(taskElement);
           closeDeleteConfirm(taskElement, false);
           const task = tasks.find(item => item.id === taskElement.dataset.taskId);
           if (!task) return;
@@ -1289,15 +1400,40 @@
           const editInput = editForm.querySelector(".edit-input");
           editInput.value = task.text;
           editForm.classList.add("is-open");
+          taskElement.querySelector(".task-title").hidden = true;
           editInput.focus();
           editInput.select();
         }
 
         if (event.target.closest(".edit-cancel")) closeEditForm(taskElement);
 
+        const noteEditTrigger = event.target.closest(".note-edit-trigger");
+        if (noteEditTrigger) {
+          const noteElement = noteEditTrigger.closest(".note");
+          const task = tasks.find(item => item.id === taskElement.dataset.taskId);
+          const note = task?.notes.find(item => item.id === noteElement.dataset.noteId);
+          if (!note) return;
+          closeNoteForm(taskElement, false);
+          closeEditForm(taskElement, false);
+          closeNoteEdits(taskElement);
+          closeDeleteConfirm(taskElement, false);
+          const noteEditForm = noteElement.querySelector(".note-edit-form");
+          const noteEditInput = noteEditForm.querySelector(".note-edit-input");
+          noteEditInput.value = note.text;
+          noteEditForm.classList.add("is-open");
+          noteEditTrigger.hidden = true;
+          noteEditInput.focus();
+          noteEditInput.select();
+        }
+
+        if (event.target.closest(".note-edit-cancel")) {
+          closeNoteEdit(event.target.closest(".note"));
+        }
+
         if (event.target.closest(".delete-button")) {
           closeNoteForm(taskElement, false);
           closeEditForm(taskElement, false);
+          closeNoteEdits(taskElement);
           taskElement.querySelector(".delete-confirm").hidden = false;
           taskElement.querySelector(".delete-button").hidden = true;
         }
@@ -1347,6 +1483,23 @@
           saveTasks();
           render();
           showStatus("已更新待办");
+          return;
+        }
+
+        if (event.target.matches(".note-edit-form")) {
+          const noteElement = event.target.closest(".note");
+          const note = task.notes.find(item => item.id === noteElement.dataset.noteId);
+          const input = event.target.querySelector(".note-edit-input");
+          const text = input.value.trim();
+          if (!note || !text) return;
+          note.text = text;
+          saveTasks();
+          const trigger = noteElement.querySelector(".note-edit-trigger");
+          trigger.textContent = text;
+          trigger.setAttribute("aria-label", `编辑进展：${text}`);
+          closeNoteEdit(noteElement, false);
+          trigger.focus();
+          showStatus("已更新进展，原时间已保留");
         }
       });
 
@@ -1356,6 +1509,9 @@
         }
         if (event.key === "Escape" && event.target.matches(".edit-input")) {
           closeEditForm(event.target.closest(".task"));
+        }
+        if (event.key === "Escape" && event.target.matches(".note-edit-input")) {
+          closeNoteEdit(event.target.closest(".note"));
         }
       });
 
@@ -1406,7 +1562,23 @@
         form.reset();
         form.classList.remove("is-open");
         const trigger = taskElement.querySelector(".task-title");
+        trigger.hidden = false;
         if (restoreFocus) trigger.focus();
+      }
+
+      function closeNoteEdit(noteElement, restoreFocus = true) {
+        const form = noteElement.querySelector(".note-edit-form");
+        form.reset();
+        form.classList.remove("is-open");
+        const trigger = noteElement.querySelector(".note-edit-trigger");
+        trigger.hidden = false;
+        if (restoreFocus) trigger.focus();
+      }
+
+      function closeNoteEdits(taskElement) {
+        taskElement.querySelectorAll(".note-edit-form.is-open").forEach(form => {
+          closeNoteEdit(form.closest(".note"), false);
+        });
       }
 
       function closeDeleteConfirm(taskElement, restoreFocus = true) {
