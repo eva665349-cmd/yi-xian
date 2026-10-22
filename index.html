@@ -510,16 +510,53 @@
     .delete-button,
     .delete-cancel { color: var(--muted); }
 
+    .task-category-control {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 28px;
+      padding: 3px 0;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 12px;
+      line-height: 1;
+      max-width: 104px;
+    }
+
+    .task-category-control:focus-within {
+      color: var(--ink);
+      outline: 1px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    .task-category-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .task-category-chevron {
+      flex: 0 0 6px;
+      width: 6px;
+      height: 6px;
+      margin: -3px 1px 0 0;
+      border-right: 1.2px solid currentColor;
+      border-bottom: 1.2px solid currentColor;
+      transform: rotate(45deg);
+    }
+
     .task-category-select {
-      max-width: 90px;
-      padding: 3px 12px 3px 0;
-      border-bottom-color: transparent;
-      -webkit-appearance: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' fill='none' stroke='%23777777' stroke-width='1.2'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 1px center;
-      background-size: 8px 5px;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      opacity: 0;
+      cursor: pointer;
     }
 
     .note-trigger:hover,
@@ -755,7 +792,8 @@
     }
 
     .category-items,
-    .archive-items {
+    .archive-items,
+    .trash-items {
       margin: 0;
       padding: 0;
       list-style: none;
@@ -775,7 +813,8 @@
       text-decoration: line-through;
     }
 
-    .archive-content {
+    .archive-content,
+    .trash-content {
       padding-top: 2px;
       border-top: 1px solid var(--line);
     }
@@ -796,7 +835,11 @@
       font-size: 14px;
     }
 
-    .restore-button {
+    .restore-button,
+    .trash-restore-button,
+    .trash-delete-button,
+    .trash-delete-confirm-button,
+    .trash-delete-cancel {
       padding: 3px 0;
       border: 0;
       border-bottom: 1px solid transparent;
@@ -807,7 +850,40 @@
       font-size: 12px;
     }
 
-    .restore-button:hover { border-bottom-color: currentColor; }
+    .trash-delete-button,
+    .trash-delete-cancel { color: var(--muted); }
+
+    .trash-delete-confirm-button { color: var(--ink); }
+
+    .restore-button:hover,
+    .trash-restore-button:hover,
+    .trash-delete-button:hover,
+    .trash-delete-confirm-button:hover,
+    .trash-delete-cancel:hover { border-bottom-color: currentColor; }
+
+    .trash-action-area {
+      display: flex;
+      justify-content: flex-end;
+      min-width: 112px;
+    }
+
+    .trash-actions,
+    .trash-delete-confirm {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .trash-delete-confirm {
+      color: var(--muted);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      font-size: 11px;
+    }
+
+    .trash-delete-confirm[hidden] { display: none; }
+
+    .trash-actions[hidden] { display: none; }
 
     .status-message {
       position: fixed;
@@ -987,6 +1063,16 @@
 
       .archive-row { padding: 14px 0; }
 
+      .trash-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .trash-action-area { justify-content: flex-start; }
+
+      .trash-actions,
+      .trash-delete-confirm { justify-content: flex-start; }
+
       .status-message {
         right: max(16px, env(safe-area-inset-right));
         bottom: max(16px, env(safe-area-inset-bottom));
@@ -1027,6 +1113,7 @@
       <a href="#home" data-view-link="home">主页</a>
       <a href="#categories" data-view-link="categories">类别</a>
       <a href="#archive" data-view-link="archive">归档</a>
+      <a href="#trash" data-view-link="trash">垃圾站</a>
     </nav>
 
     <section class="view" id="home-view" aria-labelledby="home-nav-label">
@@ -1041,7 +1128,7 @@
 
       <ul class="task-list" id="task-list" aria-label="待办列表"></ul>
       <p class="empty" id="empty">这里暂时是空白的，写下第一件事吧。</p>
-      <p class="hint">勾选方框可标记完成；归档后会离开主页，并可在“归档”页面恢复。<br>每件事都可以反复“记进展”。</p>
+      <p class="hint">勾选方框可标记完成；归档后可从“归档”恢复，删除后会进入“垃圾站”。<br>每件事都可以反复“记进展”。</p>
     </section>
 
     <section class="view" id="categories-view" aria-labelledby="categories-title" hidden>
@@ -1065,6 +1152,14 @@
         <p id="archive-count">0 条记录</p>
       </div>
       <div class="archive-content" id="archive-content"></div>
+    </section>
+
+    <section class="view" id="trash-view" aria-labelledby="trash-title" hidden>
+      <div class="page-heading">
+        <h2 id="trash-title" tabindex="-1">垃圾站</h2>
+        <p id="trash-count">0 条记录</p>
+      </div>
+      <div class="trash-content" id="trash-content"></div>
     </section>
   </main>
 
@@ -1100,11 +1195,14 @@
       const homeView = document.querySelector("#home-view");
       const categoriesView = document.querySelector("#categories-view");
       const archiveView = document.querySelector("#archive-view");
+      const trashView = document.querySelector("#trash-view");
       const categoryForm = document.querySelector("#category-form");
       const categoryInput = document.querySelector("#category-input");
       const categoryList = document.querySelector("#category-list");
       const archiveCount = document.querySelector("#archive-count");
       const archiveContent = document.querySelector("#archive-content");
+      const trashCount = document.querySelector("#trash-count");
+      const trashContent = document.querySelector("#trash-content");
       const statusMessage = document.querySelector("#status-message");
 
       let categories = loadCategories();
@@ -1146,6 +1244,7 @@
         return {
           ...task,
           archived: Boolean(task.archived),
+          deletedAt: typeof task.deletedAt === "string" ? task.deletedAt : "",
           categoryId: categoryExists
             ? task.categoryId
             : task.id === "example-app-idea" ? "ideas" : "uncategorized",
@@ -1181,7 +1280,7 @@
 
       function render() {
         const activeTasks = tasks
-          .filter(task => !task.archived)
+          .filter(task => !task.archived && !task.deletedAt)
           .slice()
           .sort((a, b) => recordedTime(a.createdAt) - recordedTime(b.createdAt));
         const openCount = activeTasks.filter(task => !task.done).length;
@@ -1235,9 +1334,13 @@
               </div>
               <div class="task-actions">
                 <button class="note-trigger" type="button">＋ 记进展</button>
-                <select class="task-category-select" aria-label="更改“${escapeHtml(task.text)}”的类别">
-                  ${categoryOptions(task.categoryId)}
-                </select>
+                <span class="task-category-control">
+                  <span class="task-category-label" aria-hidden="true">${escapeHtml(categoryName(task.categoryId))}</span>
+                  <span class="task-category-chevron" aria-hidden="true"></span>
+                  <select class="task-category-select" aria-label="更改“${escapeHtml(task.text)}”的类别">
+                    ${categoryOptions(task.categoryId)}
+                  </select>
+                </span>
                 <button class="archive-button" type="button">归档</button>
                 <button class="delete-button" type="button">删除</button>
                 <form class="note-form">
@@ -1246,8 +1349,8 @@
                   <button class="note-cancel" type="button">取消</button>
                 </form>
                 <div class="delete-confirm" role="alert" hidden>
-                  <span>删除后无法恢复，确定吗？</span>
-                  <button class="delete-confirm-button" type="button">确定删除</button>
+                  <span>将移入垃圾站，可随时恢复。</span>
+                  <button class="delete-confirm-button" type="button">移入垃圾站</button>
                   <button class="delete-cancel" type="button">取消</button>
                 </div>
               </div>
@@ -1256,6 +1359,7 @@
 
         renderCategories();
         renderArchive();
+        renderTrash();
         syncView();
       }
 
@@ -1269,7 +1373,7 @@
       }
 
       function renderCategories() {
-        const activeTasks = tasks.filter(task => !task.archived);
+        const activeTasks = tasks.filter(task => !task.archived && !task.deletedAt);
 
         categoryList.innerHTML = categories.map(category => {
           const groupedTasks = activeTasks.filter(task => task.categoryId === category.id);
@@ -1290,7 +1394,7 @@
       }
 
       function renderArchive() {
-        const archivedTasks = tasks.filter(task => task.archived);
+        const archivedTasks = tasks.filter(task => task.archived && !task.deletedAt);
 
         archiveCount.textContent = `${archivedTasks.length} 条记录`;
         archiveContent.innerHTML = archivedTasks.length ? `
@@ -1309,13 +1413,49 @@
           </ul>` : `<p class="category-empty">还没有归档的待办。</p>`;
       }
 
+      function renderTrash() {
+        const deletedTasks = tasks
+          .filter(task => task.deletedAt)
+          .slice()
+          .sort((a, b) => recordedTime(b.deletedAt) - recordedTime(a.deletedAt));
+
+        trashCount.textContent = `${deletedTasks.length} 条记录`;
+        trashContent.innerHTML = deletedTasks.length ? `
+          <ul class="trash-items">
+            ${deletedTasks.map(task => `
+              <li class="archive-row trash-row" data-task-id="${escapeHtml(task.id)}">
+                <div>
+                  <span class="archive-name">${escapeHtml(task.text)}</span>
+                  <span class="archive-meta">
+                    <span>${escapeHtml(categoryName(task.categoryId))}</span>
+                    <span>删除于 ${escapeHtml(task.deletedAt)}</span>
+                  </span>
+                </div>
+                <div class="trash-action-area">
+                  <div class="trash-actions">
+                    <button class="trash-restore-button" type="button">恢复</button>
+                    <button class="trash-delete-button" type="button">彻底删除</button>
+                  </div>
+                  <div class="trash-delete-confirm" role="alert" hidden>
+                    <span>删除后无法恢复</span>
+                    <button class="trash-delete-confirm-button" type="button">确定</button>
+                    <button class="trash-delete-cancel" type="button">取消</button>
+                  </div>
+                </div>
+              </li>`).join("")}
+          </ul>` : `<p class="category-empty">垃圾站是空的。</p>`;
+      }
+
       function syncView() {
         const view = location.hash === "#categories"
           ? "categories"
-          : location.hash === "#archive" ? "archive" : "home";
+          : location.hash === "#archive"
+            ? "archive"
+            : location.hash === "#trash" ? "trash" : "home";
         homeView.hidden = view !== "home";
         categoriesView.hidden = view !== "categories";
         archiveView.hidden = view !== "archive";
+        trashView.hidden = view !== "trash";
         document.querySelectorAll("[data-view-link]").forEach(link => {
           const active = link.dataset.viewLink === view;
           link.classList.toggle("is-active", active);
@@ -1333,6 +1473,13 @@
         }, 2600);
       }
 
+      function focusCaretAtEnd(input) {
+        const end = input.value.length;
+        input.focus();
+        input.setSelectionRange(end, end);
+        input.scrollLeft = input.scrollWidth;
+      }
+
       taskForm.addEventListener("submit", event => {
         event.preventDefault();
         const text = taskInput.value.trim();
@@ -1343,6 +1490,7 @@
           createdAt: formatNow(),
           done: false,
           archived: false,
+          deletedAt: "",
           categoryId: taskCategory.value || "uncategorized",
           notes: []
         });
@@ -1401,8 +1549,7 @@
           editInput.value = task.text;
           editForm.classList.add("is-open");
           taskElement.querySelector(".task-title").hidden = true;
-          editInput.focus();
-          editInput.select();
+          focusCaretAtEnd(editInput);
         }
 
         if (event.target.closest(".edit-cancel")) closeEditForm(taskElement);
@@ -1422,8 +1569,7 @@
           noteEditInput.value = note.text;
           noteEditForm.classList.add("is-open");
           noteEditTrigger.hidden = true;
-          noteEditInput.focus();
-          noteEditInput.select();
+          focusCaretAtEnd(noteEditInput);
         }
 
         if (event.target.closest(".note-edit-cancel")) {
@@ -1434,18 +1580,22 @@
           closeNoteForm(taskElement, false);
           closeEditForm(taskElement, false);
           closeNoteEdits(taskElement);
-          taskElement.querySelector(".delete-confirm").hidden = false;
+          const confirmation = taskElement.querySelector(".delete-confirm");
+          confirmation.hidden = false;
           taskElement.querySelector(".delete-button").hidden = true;
+          confirmation.querySelector(".delete-confirm-button").focus();
         }
 
         if (event.target.closest(".delete-cancel")) closeDeleteConfirm(taskElement);
 
         if (event.target.closest(".delete-confirm-button")) {
-          const taskId = taskElement.dataset.taskId;
-          tasks = tasks.filter(item => item.id !== taskId);
+          const task = tasks.find(item => item.id === taskElement.dataset.taskId);
+          if (!task) return;
+          task.deletedAt = formatNow();
           saveTasks();
           render();
-          showStatus("已删除待办");
+          (taskList.querySelector(".task-title") || taskInput).focus();
+          showStatus("已移入垃圾站");
           return;
         }
 
@@ -1544,6 +1694,46 @@
         saveTasks();
         render();
         showStatus("已恢复到主页");
+      });
+
+      trashContent.addEventListener("click", event => {
+        const row = event.target.closest(".trash-row");
+        if (!row) return;
+        const task = tasks.find(item => item.id === row.dataset.taskId);
+        if (!task) return;
+
+        if (event.target.closest(".trash-restore-button")) {
+          task.deletedAt = "";
+          task.archived = false;
+          saveTasks();
+          render();
+          document.querySelector("#trash-title").focus();
+          showStatus("已恢复到主页");
+          return;
+        }
+
+        if (event.target.closest(".trash-delete-button")) {
+          row.querySelector(".trash-actions").hidden = true;
+          const confirmation = row.querySelector(".trash-delete-confirm");
+          confirmation.hidden = false;
+          confirmation.querySelector(".trash-delete-confirm-button").focus();
+          return;
+        }
+
+        if (event.target.closest(".trash-delete-cancel")) {
+          row.querySelector(".trash-delete-confirm").hidden = true;
+          row.querySelector(".trash-actions").hidden = false;
+          row.querySelector(".trash-delete-button").focus();
+          return;
+        }
+
+        if (event.target.closest(".trash-delete-confirm-button")) {
+          tasks = tasks.filter(item => item.id !== task.id);
+          saveTasks();
+          render();
+          document.querySelector("#trash-title").focus();
+          showStatus("已彻底删除");
+        }
       });
 
       window.addEventListener("hashchange", syncView);
